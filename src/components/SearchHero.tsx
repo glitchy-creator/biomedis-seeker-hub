@@ -1,53 +1,153 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FileUpload from '@/components/FileUpload';
+import ProductCarousel from '@/components/ProductCarousel';
+
+// Mock product data for demonstration
+const mockProducts = [
+  {
+    id: '1',
+    name: 'Digital X-Ray Machine Model XR-2000',
+    brand: 'MedTech Solutions',
+    price: 45000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '2',
+    name: 'Portable Ultrasound Scanner US-Pro',
+    brand: 'Healthcare Innovations',
+    price: 28000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '3',
+    name: 'ECG Monitor CardioMax 12-Lead',
+    brand: 'CardioTech',
+    price: 15000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '4',
+    name: 'Anesthesia Machine FlowMax 3000',
+    brand: 'AnestheCare',
+    price: 65000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '5',
+    name: 'Patient Monitor VitalPro 360',
+    brand: 'VitalSystems',
+    price: 18500,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '6',
+    name: 'Dental Chair ComfortMax Deluxe',
+    brand: 'DentalPro',
+    price: 12000,
+    image: '/placeholder.svg'
+  }
+];
 
 const SearchHero = () => {
-  return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-16 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            What are you looking for?
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            Find the best medical equipment and healthcare solutions
-          </p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          {/* Search Section */}
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search for medical equipment..."
-                className="pl-10 h-12 text-lg bg-white shadow-md border-0"
-              />
-            </div>
-            <Button size="lg" className="w-full h-12 text-lg">
-              Search Equipment
-            </Button>
-          </div>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-          {/* Upload Section */}
-          <div className="space-y-4">
-            <div className="text-center">
-              <Upload className="mx-auto h-8 w-8 text-primary mb-2" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Upload Technical Specification
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload PDF or image of your requirements
-              </p>
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    console.log('Searching for:', searchQuery);
+    
+    // Simulate search - filter mock products based on search query
+    const filteredProducts = mockProducts.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // If no exact matches, show all products as suggestions
+    const results = filteredProducts.length > 0 ? filteredProducts : mockProducts;
+    
+    setTimeout(() => {
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 500);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              What are you looking for?
+            </h1>
+            <p className="text-lg text-muted-foreground mb-8">
+              Find the best medical equipment and healthcare solutions
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Search Section */}
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search for medical equipment..."
+                  className="pl-10 h-12 text-lg bg-white shadow-md border-0"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                />
+              </div>
+              <Button 
+                size="lg" 
+                className="w-full h-12 text-lg"
+                onClick={handleSearch}
+                disabled={isSearching}
+              >
+                {isSearching ? 'Searching...' : 'Search Equipment'}
+              </Button>
             </div>
-            <FileUpload />
+
+            {/* Upload Section */}
+            <div className="space-y-4">
+              <div className="text-center">
+                <Upload className="mx-auto h-8 w-8 text-primary mb-2" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Upload Technical Specification
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload PDF or image of your requirements
+                </p>
+              </div>
+              <FileUpload />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div className="pb-8 px-4">
+          <div className="container mx-auto max-w-7xl">
+            <ProductCarousel 
+              products={searchResults}
+              title={`Search Results for "${searchQuery}"`}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

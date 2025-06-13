@@ -12,9 +12,22 @@ interface CategoryCardProps {
   name: string;
   icon: string;
   subcategories: string[];
+  onSubcategoryClick?: (subcategory: string) => void;
 }
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ name, icon, subcategories }) => {
+const CategoryCard: React.FC<CategoryCardProps> = ({ 
+  name, 
+  icon, 
+  subcategories, 
+  onSubcategoryClick 
+}) => {
+  const handleSubcategoryClick = (subcategory: string) => {
+    console.log(`Selected: ${subcategory}`);
+    if (onSubcategoryClick) {
+      onSubcategoryClick(subcategory);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,7 +55,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ name, icon, subcategories }
           <DropdownMenuItem 
             key={index}
             className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
-            onClick={() => console.log(`Selected: ${subcategory}`)}
+            onClick={() => handleSubcategoryClick(subcategory)}
           >
             {subcategory}
           </DropdownMenuItem>

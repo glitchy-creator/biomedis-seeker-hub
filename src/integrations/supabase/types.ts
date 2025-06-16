@@ -266,6 +266,33 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_suppliers: {
+        Row: {
+          company_name: string
+          country: string
+          created_at: string | null
+          id: string
+          specialization: string
+          website: string | null
+        }
+        Insert: {
+          company_name: string
+          country: string
+          created_at?: string | null
+          id?: string
+          specialization: string
+          website?: string | null
+        }
+        Update: {
+          company_name?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          specialization?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           action_type: string

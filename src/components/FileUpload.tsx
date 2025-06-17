@@ -45,20 +45,22 @@ const FileUpload = () => {
     if (allowedTypes.includes(file.type)) {
       setUploadedFile(file);
       setIsAnalyzing(true);
-      setSpecificationData(null); // Clear previous data
+      setSpecificationData(null);
       
       try {
         console.log('Starting specification analysis for file:', file.name);
+        
+        toast({
+          title: "Processing document...",
+          description: `Extracting specifications from ${file.name}`,
+        });
+        
         const analysisResult = await SpecificationAnalyzer.analyzeUploadedFile(file);
         
         // Validate that we have meaningful specifications
         const hasValidSpecs = analysisResult.specifications && 
           Object.keys(analysisResult.specifications).length > 0;
         
-        const hasProductType = analysisResult.productType && 
-          analysisResult.productType !== 'Unknown' &&
-          analysisResult.productType !== 'Medical Equipment';
-
         if (!hasValidSpecs) {
           throw new Error('No technical specifications found in the document');
         }
@@ -71,7 +73,7 @@ const FileUpload = () => {
         
         toast({
           title: "Analysis successful!",
-          description: `Found ${Object.keys(analysisResult.specifications).length} specifications for ${analysisResult.productType}`,
+          description: `Extracted ${Object.keys(analysisResult.specifications).length} specifications from ${analysisResult.productType}`,
         });
 
         console.log('Analysis completed successfully:', analysisResult);
@@ -86,12 +88,13 @@ const FileUpload = () => {
           specifications: {},
           matchedProducts: [],
           isValid: false,
-          analysisError: true
+          analysisError: true,
+          errorMessage: error.message
         });
         
         toast({
-          title: "Analysis incomplete",
-          description: "Could not extract technical specifications. Please use the filters below to find equipment.",
+          title: "Document processing incomplete",
+          description: "Could not extract clear specifications. Use the advanced filters below to search our equipment database.",
           variant: "destructive",
         });
       } finally {
@@ -152,9 +155,12 @@ const FileUpload = () => {
 
   const getUploadStatusText = () => {
     if (isAnalyzing) {
+      const fileType = uploadedFile?.type === 'application/pdf' ? 'PDF' : 'image';
       return {
-        title: "Analyzing technical specifications...",
-        subtitle: "Extracting equipment details and saving to database"
+        title: `Processing ${fileType} document...`,
+        subtitle: uploadedFile?.type === 'application/pdf' 
+          ? "Extracting text and technical specifications"
+          : "Running OCR to extract text and specifications"
       };
     }
     
@@ -162,7 +168,7 @@ const FileUpload = () => {
       if (specificationData?.analysisError) {
         return {
           title: uploadedFile.name,
-          subtitle: "Analysis incomplete - use filters below to search equipment"
+          subtitle: `Processing incomplete: ${specificationData.errorMessage || 'Use advanced filters below to search equipment'}`
         };
       }
       
@@ -182,7 +188,7 @@ const FileUpload = () => {
     
     return {
       title: "Upload technical specifications (PDF, JPG, PNG)",
-      subtitle: "Include equipment datasheets, manuals, or specification documents"
+      subtitle: "Include equipment datasheets, manuals, or specification documents for automatic analysis"
     };
   };
 

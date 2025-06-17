@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Filter, CheckCircle, AlertCircle, Plus, FileSearch } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,71 +117,6 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
   const hasMatches = specData.matchedProducts.length > 0;
   const hasValidSpecs = Object.keys(specData.specifications).length > 0;
   const isAnalysisError = specData.analysisError || false;
-
-  // Show error message if specification is invalid
-  if (!hasValidSpecs || isAnalysisError) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {hasValidSpecs && !isAnalysisError ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : isAnalysisError ? (
-              <FileSearch className="h-5 w-5 text-yellow-600" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-            )}
-            Document Analysis Results
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Product Type</p>
-              <Badge variant={hasValidSpecs && !isAnalysisError ? "secondary" : "outline"}>
-                {specData.productType}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Category</p>
-              <Badge variant="outline">{specData.category}</Badge>
-            </div>
-          </div>
-          
-          {hasValidSpecs && !isAnalysisError ? (
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">Extracted Specifications</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {Object.entries(specData.specifications).map(([key, value]) => (
-                  <div key={key} className="text-xs bg-gray-50 p-2 rounded">
-                    <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <p className="text-sm text-yellow-700 font-medium mb-2">
-                ⚠ Specifications not fully extracted from document
-              </p>
-              <p className="text-yellow-600 text-xs mb-2">
-                The document may contain:
-              </p>
-              <ul className="text-yellow-600 text-xs list-disc list-inside space-y-1">
-                <li>Unclear or low-quality images</li>
-                <li>Non-standard specification format</li>
-                <li>Missing technical details</li>
-                <li>Unsupported document structure</li>
-              </ul>
-              <p className="text-yellow-600 text-xs mt-2 font-medium">
-                💡 Use the advanced filters below to search our equipment database
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">

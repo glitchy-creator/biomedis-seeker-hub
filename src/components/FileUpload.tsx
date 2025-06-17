@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload, FileText, Image, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Image, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SpecificationAnalyzer } from '@/utils/specificationAnalyzer';
@@ -45,59 +45,53 @@ const FileUpload = () => {
     if (allowedTypes.includes(file.type)) {
       setUploadedFile(file);
       setIsAnalyzing(true);
+      setSpecificationData(null); // Clear previous data
       
       try {
         console.log('Starting specification analysis for file:', file.name);
         const analysisResult = await SpecificationAnalyzer.analyzeUploadedFile(file);
         
-        // Check if valid specifications were found
-        const hasValidSpecifications = analysisResult && 
-          analysisResult.specifications && 
-          Object.keys(analysisResult.specifications).length > 0 &&
-          analysisResult.productType && 
-          analysisResult.productType !== 'Unknown';
-
-        if (!hasValidSpecifications) {
-          // Set invalid specification data
-          setSpecificationData({
-            productType: 'No specifications found',
-            category: 'Unknown',
-            specifications: {},
-            matchedProducts: [],
-            isValid: false
-          });
-          
-          toast({
-            title: "No technical specifications found",
-            description: "Please upload a document with clear technical specifications, model numbers, or equipment details.",
-            variant: "destructive",
-          });
-        } else {
-          setSpecificationData({
-            ...analysisResult,
-            isValid: true
-          });
-          
-          toast({
-            title: "File analyzed successfully",
-            description: `Found specifications for ${analysisResult.productType}`,
-          });
-        }
-      } catch (error) {
-        console.error('Analysis failed:', error);
+        // Validate that we have meaningful specifications
+        const hasValidSpecs = analysisResult.specifications && 
+          Object.keys(analysisResult.specifications).length > 0;
         
-        // Set error state
+        const hasProductType = analysisResult.productType && 
+          analysisResult.productType !== 'Unknown' &&
+          analysisResult.productType !== 'Medical Equipment';
+
+        if (!hasValidSpecs) {
+          throw new Error('No technical specifications found in the document');
+        }
+
+        // Set valid specification data
         setSpecificationData({
-          productType: 'Analysis failed',
-          category: 'Error',
-          specifications: {},
-          matchedProducts: [],
-          isValid: false
+          ...analysisResult,
+          isValid: true
         });
         
         toast({
-          title: "Analysis failed",
-          description: "Could not analyze the document. Please ensure it contains readable technical specifications and try again.",
+          title: "Analysis successful!",
+          description: `Found ${Object.keys(analysisResult.specifications).length} specifications for ${analysisResult.productType}`,
+        });
+
+        console.log('Analysis completed successfully:', analysisResult);
+        
+      } catch (error) {
+        console.error('Analysis failed:', error);
+        
+        // Set fallback data that shows filters but indicates analysis failed
+        setSpecificationData({
+          productType: 'Technical analysis incomplete',
+          category: 'General Medical Equipment',
+          specifications: {},
+          matchedProducts: [],
+          isValid: false,
+          analysisError: true
+        });
+        
+        toast({
+          title: "Analysis incomplete",
+          description: "Could not extract technical specifications. Please use the filters below to find equipment.",
           variant: "destructive",
         });
       } finally {
@@ -121,8 +115,8 @@ const FileUpload = () => {
     ).length;
     
     toast({
-      title: "Filters applied",
-      description: `Searching with ${activeFilters} filter criteria`,
+      title: "Searching equipment database",
+      description: `Finding equipment with ${activeFilters} filter criteria applied`,
     });
   };
 
@@ -139,13 +133,17 @@ const FileUpload = () => {
     
     if (uploadedFile) {
       if (specificationData?.isValid === false) {
-        return <AlertCircle className="h-8 w-8 text-red-600" />;
+        return <AlertCircle className="h-8 w-8 text-yellow-600" />;
+      }
+      
+      if (specificationData?.isValid === true) {
+        return <CheckCircle className="h-8 w-8 text-green-600" />;
       }
       
       return uploadedFile.type === 'application/pdf' ? (
-        <FileText className="h-8 w-8 text-green-600" />
+        <FileText className="h-8 w-8 text-blue-600" />
       ) : (
-        <Image className="h-8 w-8 text-green-600" />
+        <Image className="h-8 w-8 text-blue-600" />
       );
     }
     
@@ -155,36 +153,46 @@ const FileUpload = () => {
   const getUploadStatusText = () => {
     if (isAnalyzing) {
       return {
-        title: "Analyzing specifications...",
-        subtitle: "Extracting technical details from your document"
+        title: "Analyzing technical specifications...",
+        subtitle: "Extracting equipment details and saving to database"
       };
     }
     
     if (uploadedFile) {
-      if (specificationData?.isValid === false) {
+      if (specificationData?.analysisError) {
         return {
           title: uploadedFile.name,
-          subtitle: "No valid specifications found - please upload a different document"
+          subtitle: "Analysis incomplete - use filters below to search equipment"
+        };
+      }
+      
+      if (specificationData?.isValid === true) {
+        const specCount = Object.keys(specificationData.specifications || {}).length;
+        return {
+          title: uploadedFile.name,
+          subtitle: `Successfully extracted ${specCount} technical specifications`
         };
       }
       
       return {
         title: uploadedFile.name,
-        subtitle: "File uploaded and analyzed successfully"
+        subtitle: "File uploaded - processing specifications"
       };
     }
     
     return {
-      title: "Drop technical specifications here or click to upload",
-      subtitle: "PDF, JPG, PNG up to 10MB"
+      title: "Upload technical specifications (PDF, JPG, PNG)",
+      subtitle: "Include equipment datasheets, manuals, or specification documents"
     };
   };
 
   const statusText = getUploadStatusText();
-  const statusColor = specificationData?.isValid === false ? 'text-red-700' : 
-                     uploadedFile ? 'text-green-700' : 'text-foreground';
-  const subtitleColor = specificationData?.isValid === false ? 'text-red-600' : 
-                       uploadedFile ? 'text-green-600' : 'text-muted-foreground';
+  const statusColor = specificationData?.analysisError ? 'text-yellow-700' : 
+                     specificationData?.isValid === true ? 'text-green-700' :
+                     uploadedFile ? 'text-blue-700' : 'text-foreground';
+  const subtitleColor = specificationData?.analysisError ? 'text-yellow-600' : 
+                       specificationData?.isValid === true ? 'text-green-600' :
+                       uploadedFile ? 'text-blue-600' : 'text-muted-foreground';
 
   return (
     <div className="w-full space-y-6">
@@ -192,10 +200,12 @@ const FileUpload = () => {
         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           dragActive
             ? 'border-primary bg-primary/5'
-            : specificationData?.isValid === false
-            ? 'border-red-300 bg-red-50'
+            : specificationData?.analysisError
+            ? 'border-yellow-300 bg-yellow-50'
+            : specificationData?.isValid === true
+            ? 'bg-green-50 border-green-300'
             : uploadedFile 
-            ? 'bg-green-50 border-green-300' 
+            ? 'bg-blue-50 border-blue-300' 
             : 'border-muted-foreground/25 hover:border-primary/50 bg-white'
         }`}
         onDragEnter={handleDrag}
@@ -234,6 +244,7 @@ const FileUpload = () => {
         </Button>
       )}
 
+      {/* Show filters even if analysis failed, but with different messaging */}
       {specificationData && (
         <SpecificationFilter 
           specData={specificationData}

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Filter, CheckCircle, AlertCircle, Plus } from 'lucide-react';
+import { Filter, CheckCircle, AlertCircle, Plus, FileSearch } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +17,7 @@ interface SpecificationFilterProps {
     specifications: Record<string, string>;
     matchedProducts: any[];
     isValid?: boolean;
+    analysisError?: boolean;
   };
   onFilterApply: (filters: any) => void;
 }
@@ -114,36 +114,69 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
   };
 
   const hasMatches = specData.matchedProducts.length > 0;
-  const isValidSpecification = specData.isValid !== false;
+  const hasValidSpecs = Object.keys(specData.specifications).length > 0;
+  const isAnalysisError = specData.analysisError || false;
 
   // Show error message if specification is invalid
-  if (!isValidSpecification) {
+  if (!hasValidSpecs || isAnalysisError) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
-            <AlertCircle className="h-5 w-5" />
-            Invalid Technical Specification
+          <CardTitle className="flex items-center gap-2">
+            {hasValidSpecs && !isAnalysisError ? (
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            ) : isAnalysisError ? (
+              <FileSearch className="h-5 w-5 text-yellow-600" />
+            ) : (
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+            )}
+            Document Analysis Results
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-            <p className="text-red-700 font-medium mb-2">
-              ⚠ No valid technical specifications found in the uploaded document.
-            </p>
-            <p className="text-red-600 text-sm">
-              Please upload a document that contains:
-            </p>
-            <ul className="text-red-600 text-sm mt-2 list-disc list-inside space-y-1">
-              <li>Equipment specifications (technical parameters, dimensions, power requirements)</li>
-              <li>Model numbers or product names</li>
-              <li>Performance criteria or requirements</li>
-              <li>Compliance standards or certifications needed</li>
-            </ul>
-            <p className="text-red-600 text-sm mt-3">
-              Try uploading a clearer image or a PDF with detailed technical information.
-            </p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Product Type</p>
+              <Badge variant={hasValidSpecs && !isAnalysisError ? "secondary" : "outline"}>
+                {specData.productType}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Category</p>
+              <Badge variant="outline">{specData.category}</Badge>
+            </div>
           </div>
+          
+          {hasValidSpecs && !isAnalysisError ? (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Extracted Specifications</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {Object.entries(specData.specifications).map(([key, value]) => (
+                  <div key={key} className="text-xs bg-gray-50 p-2 rounded">
+                    <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-700 font-medium mb-2">
+                ⚠ Specifications not fully extracted from document
+              </p>
+              <p className="text-yellow-600 text-xs mb-2">
+                The document may contain:
+              </p>
+              <ul className="text-yellow-600 text-xs list-disc list-inside space-y-1">
+                <li>Unclear or low-quality images</li>
+                <li>Non-standard specification format</li>
+                <li>Missing technical details</li>
+                <li>Unsupported document structure</li>
+              </ul>
+              <p className="text-yellow-600 text-xs mt-2 font-medium">
+                💡 Use the advanced filters below to search our equipment database
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -155,19 +188,23 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {hasMatches ? (
+            {hasValidSpecs && !isAnalysisError ? (
               <CheckCircle className="h-5 w-5 text-green-600" />
+            ) : isAnalysisError ? (
+              <FileSearch className="h-5 w-5 text-yellow-600" />
             ) : (
               <AlertCircle className="h-5 w-5 text-yellow-600" />
             )}
-            Specification Analysis Results
+            Document Analysis Results
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Product Type</p>
-              <Badge variant="secondary">{specData.productType}</Badge>
+              <Badge variant={hasValidSpecs && !isAnalysisError ? "secondary" : "outline"}>
+                {specData.productType}
+              </Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Category</p>
@@ -175,40 +212,49 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
             </div>
           </div>
           
-          <div>
-            <p className="text-sm text-muted-foreground mb-2">Extracted Specifications</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {Object.entries(specData.specifications).map(([key, value]) => (
-                <div key={key} className="text-xs bg-gray-50 p-2 rounded">
-                  <span className="font-medium capitalize">{key}:</span> {value}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {hasMatches ? (
-            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-              <p className="text-sm text-green-700">
-                ✓ Found {specData.matchedProducts.length} matching products based on your specifications
-              </p>
+          {hasValidSpecs && !isAnalysisError ? (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Extracted Specifications</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {Object.entries(specData.specifications).map(([key, value]) => (
+                  <div key={key} className="text-xs bg-gray-50 p-2 rounded">
+                    <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-              <p className="text-sm text-yellow-700">
-                ⚠ No exact matches found. Use the filters below to find similar products.
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-700 font-medium mb-2">
+                ⚠ Specifications not fully extracted from document
+              </p>
+              <p className="text-yellow-600 text-xs mb-2">
+                The document may contain:
+              </p>
+              <ul className="text-yellow-600 text-xs list-disc list-inside space-y-1">
+                <li>Unclear or low-quality images</li>
+                <li>Non-standard specification format</li>
+                <li>Missing technical details</li>
+                <li>Unsupported document structure</li>
+              </ul>
+              <p className="text-yellow-600 text-xs mt-2 font-medium">
+                💡 Use the advanced filters below to search our equipment database
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Enhanced Filter Options */}
+      {/* Enhanced Filter Options - Always show this section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Advanced Filter Options
+            Find Equipment in Our Database
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Use these filters to search our comprehensive medical equipment database
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Country/Region Filter */}
@@ -341,7 +387,7 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
             className="w-full"
             size="lg"
           >
-            Apply Filters & Find Equipment
+            Search Equipment Database
           </Button>
         </CardContent>
       </Card>
@@ -351,7 +397,7 @@ const SpecificationFilter: React.FC<SpecificationFilterProps> = ({
         <div>
           <ProductCarousel 
             products={specData.matchedProducts}
-            title={hasMatches ? "Recommended Products Based on Your Specifications" : "Similar Products You Might Like"}
+            title={hasMatches ? "Recommended Equipment Based on Your Document" : "Popular Medical Equipment"}
           />
         </div>
       )}

@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
-import { createWorker } from 'tesseract.js';
+import { createWorker, PSM } from 'tesseract.js';
 
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -371,7 +371,7 @@ export class SpecificationAnalyzer {
       // Configure for better technical text recognition
       await worker.setParameters({
         tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,()-/:= \n\t',
-        tessedit_pageseg_mode: 1, // Use number instead of string
+        tessedit_pageseg_mode: PSM.AUTO, // Use proper PSM enum value
         preserve_interword_spaces: '1'
       });
       

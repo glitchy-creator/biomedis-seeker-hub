@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
@@ -243,7 +242,7 @@ export class SpecificationAnalyzer {
       }
       
       // Parse MRI specifications using enhanced NLP
-      const result = this.parseIntelligentMRISpecifications(extractionResult.text, extractionResult.method);
+      const result = this.parseIntelligentMRISpecifications(extractionResult.text);
       
       // Add extraction metadata
       result.extractionMetadata = {
@@ -372,7 +371,7 @@ export class SpecificationAnalyzer {
       // Configure for better technical text recognition
       await worker.setParameters({
         tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,()-/:= \n\t',
-        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
+        tessedit_pageseg_mode: 1, // Use number instead of string
         preserve_interword_spaces: '1'
       });
       
@@ -450,12 +449,19 @@ export class SpecificationAnalyzer {
     // Find matching products based on specifications
     const matchedProducts = this.findSimilarMRIProducts(specifications);
 
+    // Add required extractionMetadata with default values
     return {
       productType,
       category,
       specifications,
       matchedProducts,
-      confidenceScores
+      confidenceScores,
+      extractionMetadata: {
+        textLength: text.length,
+        processingTime: 0, // Will be set by caller
+        extractionMethod: 'pdf', // Will be set by caller
+        specificationCount: Object.keys(specifications).length
+      }
     };
   }
 

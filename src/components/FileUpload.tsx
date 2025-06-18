@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload, FileText, Image, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, FileText, Image, Loader2, AlertCircle, CheckCircle, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SpecificationAnalyzer } from '@/utils/specificationAnalyzer';
@@ -11,6 +11,7 @@ const FileUpload = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [specificationData, setSpecificationData] = useState<any>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<string>('');
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -42,75 +43,91 @@ const FileUpload = () => {
 
   const handleFile = async (file: File) => {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (allowedTypes.includes(file.type)) {
-      setUploadedFile(file);
-      setIsAnalyzing(true);
-      setSpecificationData(null);
-      
-      try {
-        console.log('Starting specification analysis for file:', file.name);
-        
-        toast({
-          title: "Processing document...",
-          description: `Extracting specifications from ${file.name}`,
-        });
-        
-        const analysisResult = await SpecificationAnalyzer.analyzeUploadedFile(file);
-        
-        // Validate that we have meaningful specifications
-        const hasValidSpecs = analysisResult.specifications && 
-          Object.keys(analysisResult.specifications).length > 0;
-        
-        if (!hasValidSpecs) {
-          throw new Error('No technical specifications found in the document');
-        }
-
-        // Set valid specification data
-        setSpecificationData({
-          ...analysisResult,
-          isValid: true
-        });
-        
-        toast({
-          title: "Analysis successful!",
-          description: `Extracted ${Object.keys(analysisResult.specifications).length} specifications from ${analysisResult.productType}`,
-        });
-
-        console.log('Analysis completed successfully:', analysisResult);
-        
-      } catch (error) {
-        console.error('Analysis failed:', error);
-        
-        // Set fallback data that shows filters but indicates analysis failed
-        setSpecificationData({
-          productType: 'Technical analysis incomplete',
-          category: 'General Medical Equipment',
-          specifications: {},
-          matchedProducts: [],
-          isValid: false,
-          analysisError: true,
-          errorMessage: error.message
-        });
-        
-        toast({
-          title: "Document processing incomplete",
-          description: "Could not extract clear specifications. Use the advanced filters below to search our equipment database.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsAnalyzing(false);
-      }
-    } else {
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF or image file (JPG, PNG) containing technical specifications.",
+        description: "Please upload a PDF or image file (JPG, PNG) containing MRI technical specifications.",
         variant: "destructive",
       });
+      return;
+    }
+
+    setUploadedFile(file);
+    setIsAnalyzing(true);
+    setSpecificationData(null);
+    setAnalysisProgress('Initializing...');
+    
+    try {
+      console.log('Starting intelligent MRI specification analysis for file:', file.name);
+      
+      toast({
+        title: "🧠 AI Processing Started",
+        description: `Extracting MRI specifications from ${file.name}`,
+      });
+      
+      // Update progress for user feedback
+      setAnalysisProgress(file.type === 'application/pdf' ? 'Extracting text from PDF...' : 'Running OCR on image...');
+      
+      const analysisResult = await SpecificationAnalyzer.analyzeUploadedFile(file);
+      
+      // Validate that we have meaningful MRI specifications
+      const hasValidSpecs = analysisResult.specifications && 
+        Object.keys(analysisResult.specifications).length > 0;
+      
+      if (!hasValidSpecs) {
+        throw new Error('No MRI technical specifications found in the document');
+      }
+
+      // Calculate average confidence
+      const confidenceScores = Object.values(analysisResult.confidenceScores || {});
+      const avgConfidence = confidenceScores.length > 0 
+        ? confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length 
+        : 0;
+
+      // Set valid specification data
+      setSpecificationData({
+        ...analysisResult,
+        isValid: true,
+        averageConfidence: avgConfidence
+      });
+      
+      const specCount = Object.keys(analysisResult.specifications).length;
+      const processingTime = analysisResult.extractionMetadata?.processingTime || 0;
+      
+      toast({
+        title: "✅ AI Analysis Complete!",
+        description: `Extracted ${specCount} MRI specifications in ${(processingTime/1000).toFixed(1)}s with ${(avgConfidence*100).toFixed(0)}% avg confidence`,
+      });
+
+      console.log('Intelligent analysis completed successfully:', analysisResult);
+      
+    } catch (error) {
+      console.error('Intelligent analysis failed:', error);
+      
+      // Set fallback data that shows filters but indicates analysis failed
+      setSpecificationData({
+        productType: 'MRI specification analysis incomplete',
+        category: 'MRI Equipment',
+        specifications: {},
+        matchedProducts: [],
+        isValid: false,
+        analysisError: true,
+        errorMessage: error.message
+      });
+      
+      toast({
+        title: "⚠️ Specification extraction incomplete",
+        description: "Could not extract clear MRI specifications. Use the advanced filters below to search our MRI database.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+      setAnalysisProgress('');
     }
   };
 
   const handleFilterApply = (filters: any) => {
-    console.log('Applied filters:', filters);
+    console.log('Applied MRI filters:', filters);
     
     // Count active filters for better user feedback
     const activeFilters = Object.values(filters).filter(value => 
@@ -118,8 +135,8 @@ const FileUpload = () => {
     ).length;
     
     toast({
-      title: "Searching equipment database",
-      description: `Finding equipment with ${activeFilters} filter criteria applied`,
+      title: "🔍 Searching MRI database",
+      description: `Finding MRI equipment with ${activeFilters} filter criteria applied`,
     });
   };
 
@@ -127,11 +144,12 @@ const FileUpload = () => {
     setUploadedFile(null);
     setSpecificationData(null);
     setIsAnalyzing(false);
+    setAnalysisProgress('');
   };
 
   const getUploadStatusIcon = () => {
     if (isAnalyzing) {
-      return <Loader2 className="mx-auto h-8 w-8 text-primary animate-spin" />;
+      return <Brain className="mx-auto h-8 w-8 text-primary animate-pulse" />;
     }
     
     if (uploadedFile) {
@@ -155,40 +173,40 @@ const FileUpload = () => {
 
   const getUploadStatusText = () => {
     if (isAnalyzing) {
-      const fileType = uploadedFile?.type === 'application/pdf' ? 'PDF' : 'image';
       return {
-        title: `Processing ${fileType} document...`,
+        title: `🧠 AI Processing: ${analysisProgress}`,
         subtitle: uploadedFile?.type === 'application/pdf' 
-          ? "Extracting text and technical specifications"
-          : "Running OCR to extract text and specifications"
+          ? "Extracting text and analyzing MRI specifications using NLP"
+          : "Running OCR and analyzing MRI specifications using pattern recognition"
       };
     }
     
     if (uploadedFile) {
       if (specificationData?.analysisError) {
         return {
-          title: uploadedFile.name,
-          subtitle: `Processing incomplete: ${specificationData.errorMessage || 'Use advanced filters below to search equipment'}`
+          title: `⚠️ ${uploadedFile.name}`,
+          subtitle: `AI analysis incomplete: ${specificationData.errorMessage || 'Use advanced MRI filters below'}`
         };
       }
       
       if (specificationData?.isValid === true) {
         const specCount = Object.keys(specificationData.specifications || {}).length;
+        const confidence = specificationData.averageConfidence || 0;
         return {
-          title: uploadedFile.name,
-          subtitle: `Successfully extracted ${specCount} technical specifications`
+          title: `✅ ${uploadedFile.name}`,
+          subtitle: `Successfully extracted ${specCount} MRI specifications with ${(confidence*100).toFixed(0)}% avg confidence`
         };
       }
       
       return {
         title: uploadedFile.name,
-        subtitle: "File uploaded - processing specifications"
+        subtitle: "File uploaded - starting AI analysis of MRI specifications"
       };
     }
     
     return {
-      title: "Upload technical specifications (PDF, JPG, PNG)",
-      subtitle: "Include equipment datasheets, manuals, or specification documents for automatic analysis"
+      title: "Upload MRI Technical Documentation (PDF, JPG, PNG)",
+      subtitle: "AI will extract specifications like Tesla strength, bore size, gradient strength, cryogen-free status, and more"
     };
   };
 
@@ -226,7 +244,7 @@ const FileUpload = () => {
           onChange={handleChange}
         />
         
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-center">
             {getUploadStatusIcon()}
           </div>
@@ -236,6 +254,24 @@ const FileUpload = () => {
           <p className={`text-xs ${subtitleColor}`}>
             {statusText.subtitle}
           </p>
+          
+          {/* Show processing progress */}
+          {isAnalyzing && (
+            <div className="mt-4 flex items-center justify-center space-x-2">
+              <Zap className="h-4 w-4 text-primary animate-bounce" />
+              <span className="text-xs text-primary font-medium">AI Intelligence Active</span>
+            </div>
+          )}
+          
+          {/* Show confidence scores for successful analysis */}
+          {specificationData?.isValid && specificationData?.confidenceScores && (
+            <div className="mt-3 text-xs text-green-600">
+              <div className="flex justify-center space-x-4">
+                <span>Extraction Method: {specificationData.extractionMetadata?.extractionMethod === 'pdf' ? 'PDF Text' : 'OCR'}</span>
+                <span>Processing Time: {((specificationData.extractionMetadata?.processingTime || 0)/1000).toFixed(1)}s</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -246,11 +282,11 @@ const FileUpload = () => {
           className="w-full"
           onClick={resetUpload}
         >
-          Upload Different File
+          Upload Different MRI Document
         </Button>
       )}
 
-      {/* Show filters even if analysis failed, but with different messaging */}
+      {/* Show filters and results */}
       {specificationData && (
         <SpecificationFilter 
           specData={specificationData}

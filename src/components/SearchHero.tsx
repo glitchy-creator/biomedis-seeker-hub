@@ -6,7 +6,54 @@ import { Input } from '@/components/ui/input';
 import FileUpload from '@/components/FileUpload';
 import ProductCarousel from '@/components/ProductCarousel';
 
-// Mock product data for demonstration
+// Mock MRI product data for demonstration
+const mockMRIProducts = [
+  {
+    id: '1',
+    name: 'Siemens MAGNETOM Vida 3T MRI Scanner',
+    brand: 'Siemens',
+    price: 2500000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '2',
+    name: 'GE SIGNA Premier 3T MRI',
+    brand: 'GE Healthcare',
+    price: 2800000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '3',
+    name: 'Philips Ingenia 1.5T MRI',
+    brand: 'Philips',
+    price: 1800000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '4',
+    name: 'Canon Vantage Galan 3T MRI',
+    brand: 'Canon Medical',
+    price: 2300000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '5',
+    name: 'Hitachi Echelon Smart Plus 1.5T',
+    brand: 'Hitachi',
+    price: 1600000,
+    image: '/placeholder.svg'
+  },
+  {
+    id: '6',
+    name: 'Bruker BioSpec 7T Research MRI',
+    brand: 'Bruker',
+    price: 1200000,
+    image: '/placeholder.svg'
+  }
+];
+
+// Commented out for future use - general medical equipment data
+/*
 const mockProducts = [
   {
     id: '1',
@@ -51,6 +98,7 @@ const mockProducts = [
     image: '/placeholder.svg'
   }
 ];
+*/
 
 const SearchHero = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,16 +109,16 @@ const SearchHero = () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
-    console.log('Searching for:', searchQuery);
+    console.log('Searching for MRI equipment:', searchQuery);
     
-    // Simulate search - filter mock products based on search query
-    const filteredProducts = mockProducts.filter(product =>
+    // Simulate search - filter mock MRI products based on search query
+    const filteredProducts = mockMRIProducts.filter(product =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    // If no exact matches, show all products as suggestions
-    const results = filteredProducts.length > 0 ? filteredProducts : mockProducts;
+    // If no exact matches, show all MRI products as suggestions
+    const results = filteredProducts.length > 0 ? filteredProducts : mockMRIProducts;
     
     setTimeout(() => {
       setSearchResults(results);
@@ -90,10 +138,10 @@ const SearchHero = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              What are you looking for?
+              What MRI are you looking for?
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              Find the best medical equipment and healthcare solutions
+              Find the perfect MRI scanner for your healthcare facility
             </p>
           </div>
           
@@ -103,7 +151,7 @@ const SearchHero = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search for medical equipment..."
+                  placeholder="Search for MRI scanners, Tesla strength, brand..."
                   className="pl-10 h-12 text-lg bg-white shadow-md border-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -116,7 +164,7 @@ const SearchHero = () => {
                 onClick={handleSearch}
                 disabled={isSearching}
               >
-                {isSearching ? 'Searching...' : 'Search Equipment'}
+                {isSearching ? 'Searching MRI Equipment...' : 'Search MRI Scanners'}
               </Button>
             </div>
 
@@ -125,10 +173,10 @@ const SearchHero = () => {
               <div className="text-center">
                 <Upload className="mx-auto h-8 w-8 text-primary mb-2" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Upload Technical Specification
+                  Upload MRI Specification
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Upload PDF or image of your requirements
+                  Upload PDF or image of your MRI requirements
                 </p>
               </div>
               <FileUpload />
@@ -143,7 +191,7 @@ const SearchHero = () => {
           <div className="container mx-auto max-w-7xl">
             <ProductCarousel 
               products={searchResults}
-              title={`Search Results for "${searchQuery}"`}
+              title={`MRI Search Results for "${searchQuery}"`}
             />
           </div>
         </div>
